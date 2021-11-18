@@ -2,6 +2,8 @@ package main
 
 import (
 	"bytes"
+	"crypto/tls"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"flag"
@@ -9,11 +11,9 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-	"crypto/tls"
-	"encoding/base64"
-	"strings"
 	"os"
 	"runtime"
+	"strings"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -154,7 +154,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	msg.Timestamp = now.Format(time.RFC3339)
 
 	index := fmt.Sprintf("%s-%s/%s", esIndexName, now.Format(esIndexDateFormat), esType)
-	url := fmt.Sprintf("%s/%s", esURL, index)
+	url := fmt.Sprintf("%s/%s/_doc", esURL, index)
 
 	b, err = json.Marshal(&msg)
 	if err != nil {
@@ -181,9 +181,9 @@ func handler(w http.ResponseWriter, r *http.Request) {
 
 	client := new(http.Client)
 	if !empty(esUser) && !empty(esPass) {
-		req.Header.Add("Authorization","Basic " + basicAuth(esUser,esPass))
+		req.Header.Add("Authorization", "Basic "+basicAuth(esUser, esPass))
 		client.CheckRedirect = func(req *http.Request, via []*http.Request) error {
-			req.Header.Add("Authorization","Basic " + basicAuth(esUser,esPass))
+			req.Header.Add("Authorization", "Basic "+basicAuth(esUser, esPass))
 			return nil
 		}
 	}
